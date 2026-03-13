@@ -134,175 +134,172 @@ const seedData = () => {
 seedData();
 
 export const app = express();
+app.use(express.json({ limit: '50mb' }));
+
+// API Routes
+app.get("/api/services", (req, res) => {
+  const services = db.prepare("SELECT * FROM services").all();
+  res.json(services);
+});
+
+app.get("/api/products", (req, res) => {
+  const products = db.prepare("SELECT * FROM products").all();
+  res.json(products);
+});
+
+app.get("/api/team", (req, res) => {
+  const team = db.prepare("SELECT * FROM team").all();
+  res.json(team);
+});
+
+app.get("/api/gallery", (req, res) => {
+  const gallery = db.prepare("SELECT * FROM gallery").all();
+  res.json(gallery);
+});
+
+app.get("/api/faq", (req, res) => {
+  const faq = db.prepare("SELECT * FROM faq").all();
+  res.json(faq);
+});
+
+app.get("/api/testimonials", (req, res) => {
+  const testimonials = db.prepare("SELECT * FROM testimonials").all();
+  res.json(testimonials);
+});
+
+app.get("/api/business-info", (req, res) => {
+  const info = db.prepare("SELECT * FROM business_info").all();
+  const infoMap = info.reduce((acc: any, curr: any) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+  res.json(infoMap);
+});
+
+app.get("/api/site-content", (req, res) => {
+  const content = db.prepare("SELECT * FROM site_content").all();
+  const contentMap = content.reduce((acc: any, curr: any) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+  res.json(contentMap);
+});
+
+// Admin Auth (Simple for this demo)
+app.post("/api/admin/login", (req, res) => {
+  const { password } = req.body;
+  if (password === "admin123") {
+    res.json({ success: true, token: "fake-jwt-token" });
+  } else {
+    res.status(401).json({ success: false, message: "Invalid password" });
+  }
+});
+
+// Admin CMS Routes
+app.post("/api/admin/update-content", (req, res) => {
+  const { key, value } = req.body;
+  db.prepare("INSERT OR REPLACE INTO site_content (key, value) VALUES (?, ?)").run(key, value);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/update-info", (req, res) => {
+  const { key, value } = req.body;
+  db.prepare("INSERT OR REPLACE INTO business_info (key, value) VALUES (?, ?)").run(key, value);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/services", (req, res) => {
+  const { name, description, price, category, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE services SET name = ?, description = ?, price = ?, category = ? WHERE id = ?").run(name, description, price, category, id);
+  } else {
+    db.prepare("INSERT INTO services (name, description, price, category) VALUES (?, ?, ?, ?)").run(name, description, price, category);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/services/:id", (req, res) => {
+  db.prepare("DELETE FROM services WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/products", (req, res) => {
+  const { name, description, price, image, payment_link, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE products SET name = ?, description = ?, price = ?, image = ?, payment_link = ? WHERE id = ?").run(name, description, price, image, payment_link, id);
+  } else {
+    db.prepare("INSERT INTO products (name, description, price, image, payment_link) VALUES (?, ?, ?, ?, ?)").run(name, description, price, image, payment_link);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/products/:id", (req, res) => {
+  db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/team", (req, res) => {
+  const { name, role, image, bio, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE team SET name = ?, role = ?, image = ?, bio = ? WHERE id = ?").run(name, role, image, bio, id);
+  } else {
+    db.prepare("INSERT INTO team (name, role, image, bio) VALUES (?, ?, ?, ?)").run(name, role, image, bio);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/team/:id", (req, res) => {
+  db.prepare("DELETE FROM team WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/gallery", (req, res) => {
+  const { image, caption, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE gallery SET image = ?, caption = ? WHERE id = ?").run(image, caption, id);
+  } else {
+    db.prepare("INSERT INTO gallery (image, caption) VALUES (?, ?)").run(image, caption);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/gallery/:id", (req, res) => {
+  db.prepare("DELETE FROM gallery WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/faq", (req, res) => {
+  const { question, answer, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE faq SET question = ?, answer = ? WHERE id = ?").run(question, answer, id);
+  } else {
+    db.prepare("INSERT INTO faq (question, answer) VALUES (?, ?)").run(question, answer);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/faq/:id", (req, res) => {
+  db.prepare("DELETE FROM faq WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/testimonials", (req, res) => {
+  const { name, content, rating, id } = req.body;
+  if (id) {
+    db.prepare("UPDATE testimonials SET name = ?, content = ?, rating = ? WHERE id = ?").run(name, content, rating, id);
+  } else {
+    db.prepare("INSERT INTO testimonials (name, content, rating) VALUES (?, ?, ?)").run(name, content, rating);
+  }
+  res.json({ success: true });
+});
+
+app.delete("/api/admin/testimonials/:id", (req, res) => {
+  db.prepare("DELETE FROM testimonials WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
 
 async function startServer() {
   const PORT = 3000;
-
-  app.use(express.json({ limit: '50mb' }));
-
-  // API Routes
-  app.get("/api/services", (req, res) => {
-    const services = db.prepare("SELECT * FROM services").all();
-    res.json(services);
-  });
-
-  app.get("/api/products", (req, res) => {
-    const products = db.prepare("SELECT * FROM products").all();
-    res.json(products);
-  });
-
-  app.get("/api/team", (req, res) => {
-    const team = db.prepare("SELECT * FROM team").all();
-    res.json(team);
-  });
-
-  app.get("/api/gallery", (req, res) => {
-    const gallery = db.prepare("SELECT * FROM gallery").all();
-    res.json(gallery);
-  });
-
-  app.get("/api/faq", (req, res) => {
-    const faq = db.prepare("SELECT * FROM faq").all();
-    res.json(faq);
-  });
-
-  app.get("/api/testimonials", (req, res) => {
-    const testimonials = db.prepare("SELECT * FROM testimonials").all();
-    res.json(testimonials);
-  });
-
-  app.get("/api/business-info", (req, res) => {
-    const info = db.prepare("SELECT * FROM business_info").all();
-    const infoMap = info.reduce((acc: any, curr: any) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {});
-    res.json(infoMap);
-  });
-
-  app.get("/api/site-content", (req, res) => {
-    const content = db.prepare("SELECT * FROM site_content").all();
-    const contentMap = content.reduce((acc: any, curr: any) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {});
-    res.json(contentMap);
-  });
-
-  // Admin Auth (Simple for this demo)
-  app.post("/api/admin/login", (req, res) => {
-    const { password } = req.body;
-    if (password === "admin123") {
-      res.json({ success: true, token: "fake-jwt-token" });
-    } else {
-      res.status(401).json({ success: false, message: "Invalid password" });
-    }
-  });
-
-  // Admin CMS Routes (Protected by logic in frontend, but should be here)
-  app.post("/api/admin/update-content", (req, res) => {
-    const { key, value } = req.body;
-    db.prepare("INSERT OR REPLACE INTO site_content (key, value) VALUES (?, ?)").run(key, value);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/update-info", (req, res) => {
-    const { key, value } = req.body;
-    db.prepare("INSERT OR REPLACE INTO business_info (key, value) VALUES (?, ?)").run(key, value);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/services", (req, res) => {
-    const { name, description, price, category, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE services SET name = ?, description = ?, price = ?, category = ? WHERE id = ?").run(name, description, price, category, id);
-    } else {
-      db.prepare("INSERT INTO services (name, description, price, category) VALUES (?, ?, ?, ?)").run(name, description, price, category);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/services/:id", (req, res) => {
-    db.prepare("DELETE FROM services WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/products", (req, res) => {
-    const { name, description, price, image, payment_link, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE products SET name = ?, description = ?, price = ?, image = ?, payment_link = ? WHERE id = ?").run(name, description, price, image, payment_link, id);
-    } else {
-      db.prepare("INSERT INTO products (name, description, price, image, payment_link) VALUES (?, ?, ?, ?, ?)").run(name, description, price, image, payment_link);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/products/:id", (req, res) => {
-    db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/team", (req, res) => {
-    const { name, role, image, bio, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE team SET name = ?, role = ?, image = ?, bio = ? WHERE id = ?").run(name, role, image, bio, id);
-    } else {
-      db.prepare("INSERT INTO team (name, role, image, bio) VALUES (?, ?, ?, ?)").run(name, role, image, bio);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/team/:id", (req, res) => {
-    db.prepare("DELETE FROM team WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/gallery", (req, res) => {
-    const { image, caption, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE gallery SET image = ?, caption = ? WHERE id = ?").run(image, caption, id);
-    } else {
-      db.prepare("INSERT INTO gallery (image, caption) VALUES (?, ?)").run(image, caption);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/gallery/:id", (req, res) => {
-    db.prepare("DELETE FROM gallery WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/faq", (req, res) => {
-    const { question, answer, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE faq SET question = ?, answer = ? WHERE id = ?").run(question, answer, id);
-    } else {
-      db.prepare("INSERT INTO faq (question, answer) VALUES (?, ?)").run(question, answer);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/faq/:id", (req, res) => {
-    db.prepare("DELETE FROM faq WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  app.post("/api/admin/testimonials", (req, res) => {
-    const { name, content, rating, id } = req.body;
-    if (id) {
-      db.prepare("UPDATE testimonials SET name = ?, content = ?, rating = ? WHERE id = ?").run(name, content, rating, id);
-    } else {
-      db.prepare("INSERT INTO testimonials (name, content, rating) VALUES (?, ?, ?)").run(name, content, rating);
-    }
-    res.json({ success: true });
-  });
-
-  app.delete("/api/admin/testimonials/:id", (req, res) => {
-    db.prepare("DELETE FROM testimonials WHERE id = ?").run(req.params.id);
-    res.json({ success: true });
-  });
-
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
