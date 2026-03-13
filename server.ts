@@ -4,7 +4,8 @@ import path from "path";
 import Database from "better-sqlite3";
 import fs from "fs";
 
-const db = new Database("barbershop.db");
+const dbPath = process.env.VERCEL ? "/tmp/barbershop.db" : "barbershop.db";
+const db = new Database(dbPath);
 
 // Initialize Database
 db.exec(`
@@ -132,8 +133,9 @@ const seedData = () => {
 
 seedData();
 
+export const app = express();
+
 async function startServer() {
-  const app = express();
   const PORT = 3000;
 
   app.use(express.json({ limit: '50mb' }));
@@ -301,7 +303,7 @@ async function startServer() {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -320,4 +322,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (import.meta.url === `file://${process.argv[1]}` || !process.env.VERCEL) {
+  startServer();
+}
